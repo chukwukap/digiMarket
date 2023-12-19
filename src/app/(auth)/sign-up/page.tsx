@@ -14,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 function SignUpPage() {
   const {
@@ -23,9 +24,16 @@ function SignUpPage() {
   } = useForm<TAuthCredentialsValidator>({
     resolver: zodResolver(AuthCredentialsValidator),
   });
-  // const { data } = trpc.users.useQuery();
+  const { mutate, isLoading } = trpc.auth.createPayloadUser.useMutation({
+    onError: (err) => {
+      if (err.data?.code === "CONFLICT") {
+        toast.error("This email is already in use. sign in instead?");
+      }
+    },
+  });
+
   const onSubmit = ({ email, password }: TAuthCredentialsValidator) => {
-    // send data to the server
+    mutate({ email, password });
   };
   return (
     <>
@@ -62,6 +70,7 @@ function SignUpPage() {
                   <Label htmlFor="email">Password</Label>
                   <Input
                     {...register("password")}
+                    type="password"
                     className={cn({
                       "focus-visible:ring-red-500": errors.password,
                     })}
